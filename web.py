@@ -1,7 +1,7 @@
 """
 this is a sample async web frame.
 """
-__version__ = '0.1'
+__version__ = '0.2'
 __author__ = 'geb'
 
 import asyncio, logging
@@ -29,6 +29,20 @@ class HTTPError(Exception):
             return message
 
 
+class MissingArgumentError(HTTPError):
+    """Exception raised by `RequestHandler.get_argument`.
+
+    This is a subclass of `HTTPError`, so if it is uncaught a 400 response
+    code will be used instead of 500 (and a stack trace will not be logged).
+
+    .. versionadded:: 3.1
+    """
+    def __init__(self, arg_name):
+        super(MissingArgumentError, self).__init__(
+            400, 'Missing argument %s' % arg_name)
+        self.arg_name = arg_name
+
+
 class RequestHandler(object):
     """use this class to encapsulate a handler.
     """
@@ -47,15 +61,27 @@ class RequestHandler(object):
         elif request.method == 'DELETE':
             return await self.delete()
 
-    def get_argument(self, name, default=None):
-        """get the argument in url
+    async def get_argument(self, name, default=None):
+        """get the argument in url or post body
         """
-        return self.request.rel_url.query.get(name, default)
+        data = dict(await self.request.post())
+        if data:
+            result = data.get(name, default)
+        else:
+            result = self.request.rel_url.query.get(name, default)
+        if result is None:
+            raise MissingArgumentError(name)
+        return result
 
-    def get_arguments(self):
+    async def get_arguments(self):
         """get all arguments in url
         """
-        return dict(self.request.rel_url.query)
+        if self.request.rel_url.query:
+            d = dict(self.request.rel_url.query)
+        data = dict(await self.request.post())
+        if data and d:
+            d.update(data)
+        return d
 
     async def get_post(self):
         """get all form post data
