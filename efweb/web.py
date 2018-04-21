@@ -1,7 +1,7 @@
 """
 this is a sample async web frame.
 """
-__version__ = '0.2'
+__version__ = '0.1.2'
 __author__ = 'geb'
 
 import asyncio, logging
