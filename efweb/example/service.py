@@ -18,7 +18,17 @@ class Test(efweb.web.RequestHandler):
 
     async def post(self):
         print(self.request.content_type)  # application/x-www-form-urlencoded
-        return self.write_json({"success": True, 'method': 'post', 'postdata': await self.get_post()})
+        return self.write_json({"success": True, 'method': 'post', 'postdata': await self.get_post(), 'a': await self.get_argument('a')})
+
+    async def put(self):
+        print(self.request.content_type)  # application/x-www-form-urlencoded
+        return self.write_json(
+            {"success": True, 'method': 'post', 'postdata': await self.get_post(), 'a': await self.get_argument('a')})
+
+    async def delete(self):
+        print(self.request.content_type)  # application/x-www-form-urlencoded
+        return self.write_json(
+            {"success": True, 'method': 'post', 'postdata': await self.get_post(), 'a': await self.get_argument('a')})
 
 class Test2(efweb.web.RequestHandler):
     async def get(self):
@@ -33,5 +43,5 @@ routers = [(r'/', Test), (r'/user/{name}', Test2)]
 
 
 loop = asyncio.get_event_loop()
-loop.run_until_complete(efweb.web.init_app(loop, routers=routers, middlewares=[error_middleware]))
+loop.run_until_complete(efweb.web.init_app(loop, routers=routers))  # middlewares=[error_middleware]
 loop.run_forever()

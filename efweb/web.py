@@ -5,6 +5,7 @@ __version__ = '0.2'
 __author__ = 'geb'
 
 import asyncio, logging
+import aiohttp_cors
 from aiohttp import web
 from aiohttp.web import middleware, json_response
 from efweb import utils
@@ -73,15 +74,10 @@ class RequestHandler(object):
             raise MissingArgumentError(name)
         return result
 
-    async def get_arguments(self):
+    def get_arguments(self):
         """get all arguments in url
         """
-        if self.request.rel_url.query:
-            d = dict(self.request.rel_url.query)
-        data = dict(await self.request.post())
-        if data and d:
-            d.update(data)
-        return d
+        return dict(self.request.rel_url.query)
 
     async def get_post(self):
         """get all form post data
@@ -97,7 +93,8 @@ class RequestHandler(object):
 
     @property
     async def match_info(self):
-        """get all match info"""
+        """get all match info
+        """
         return dict(self.request.match_info)
 
     async def get(self, *args, **kwargs):
@@ -133,9 +130,20 @@ def add_route(app, routers):
 
 
 
-async def init_app(loop, routers, host='127.0.0.1', port=8000, middlewares=None):
+async def init_app(loop, routers, host='127.0.0.1', port=8000, middlewares=None, cors=False):
     app = web.Application(loop=loop, middlewares=middlewares)
     add_route(app, routers)
+    if cors:
+        cors = aiohttp_cors.setup(app, defaults={
+            "*": aiohttp_cors.ResourceOptions(
+                allow_credentials=True,
+                expose_headers="*",
+                allow_headers="*",
+            )
+        })
+        for route in list(app.router.routes()):
+            cors.add(route)
+
     srv = await loop.create_server(app.make_handler(), host, port)
     print(f'Server started at http://{ host }:{ port }...')
     return srv

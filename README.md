@@ -10,7 +10,7 @@ pip install efweb
 
 ## Basic EXample
 
-```
+```python
 import efweb.web
 import asyncio
 
@@ -18,18 +18,23 @@ class Test(efweb.web.RequestHandler):
     async def get(self):
         return self.write_json({"success": True, 'params': self.get_arguments()})
 
+    async def post(self):
+        return self.write_json({"success": True, 'method': 'post', 'postdata': await self.get_post(), 'a': await self.get_argument('a')})
 
 class Test2(efweb.web.RequestHandler):
     async def get(self):
         match_info = await self.match_info
         return self.write_json({"success": True, 'Handler': 'test2', 'name': match_info['name']})
 
+    async def post(self):
+        # application/json
+        return self.write_json({"success": True, 'method': 'post', 'postjson': await self.get_json()})
 
 routers = [(r'/', Test), (r'/user/{name}', Test2)]
 
 
 loop = asyncio.get_event_loop()
-loop.run_until_complete(efweb.web.init_app(loop, routers=routers))
+loop.run_until_complete(efweb.web.init_app(loop, routers=routers)) 
 loop.run_forever()
 
 ```
@@ -44,7 +49,15 @@ loop.run_forever()
 efweb.web.init_app(loop, routers=routers)
 ```
 
-可选参数host，port 传入运行ip和端口号，middlewares传入拦截函数list。
+可选参数
+
+`host` : 服务器ip
+
+`port` ：端口号
+
+`middlewares`:  拦截函数
+
+`cors`: 是否跨域请求
 
 **创建Handler：**
 
@@ -72,7 +85,7 @@ routers = [
 
 ```python
 self.get_arguments()  # 所有参数
-self.get_argument('name', 'dufault') # 单一参数
+await self.get_argument('name', 'dufault') # 单一参数 (包括post表单中的参数)
 ```
 
 **获取url中的参数：**
