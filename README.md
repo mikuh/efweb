@@ -1,6 +1,6 @@
 # efweb
 
-这是一个简单的异步API服务器框架。
+这是一个简单的异步Rest API服务框架。
 
 ## Install
 
